@@ -95,74 +95,105 @@ Skimap.prototype.getLandscape = function (pointX, pointY) {
 Skimap.prototype.getLongestPath = function (currentLandscape) {
 	var self = this;
 
-	if(currentLandscape.longestStops === undefined) {
+	// if currentLandscape is defined, get longest path from current landscape
+	// else, get the global longest path
+	if(currentLandscape) {
 
-		/**
-		 * path model should be
-		 * {
-		 * 		path: [Array of landscapes],
-		 * 		stops: how many steps,
-		 *   	lowestElevation: lowest point of slope
-		 *   	hightestElevation: hightest point of slope
-		 * }
-		 */
+		if(currentLandscape.longestStops === undefined) {
 
-		var pathIndex = [];
-		var pathValue = [];
+			/**
+			 * path model should be
+			 * {
+			 * 		path: [Array of landscapes],
+			 * 		stops: how many steps,
+			 *   	lowestElevation: lowest point of slope
+			 *   	highestElevation: highest point of slope
+			 * }
+			 */
 
-		var registerAlternatePath = function(alternateLandscape) {
-			if(alternateLandscape && alternateLandscape.elevation < currentLandscape.elevation) {
-				var alternateLongestPath = self.getLongestPath(alternateLandscape);
+			var pathIndex = [];
+			var pathValue = [];
 
-				if(pathValue[alternateLongestPath.stops] === undefined) {
-					pathValue[alternateLongestPath.stops] = alternateLongestPath;
-					pathIndex.push(alternateLongestPath.stops);
+			var registerAlternatePath = function(alternateLandscape) {
+				if(alternateLandscape && alternateLandscape.elevation < currentLandscape.elevation) {
+					var alternateLongestPath = self.getLongestPath(alternateLandscape);
+
+					if(pathValue[alternateLongestPath.stops] === undefined) {
+						pathValue[alternateLongestPath.stops] = alternateLongestPath;
+						pathIndex.push(alternateLongestPath.stops);
+					} else {
+						var currentPath = pathValue[alternateLongestPath.stops];
+						var currentElevationDiff = currentPath.highestElevation - currentPath.lowestElevation;
+						var newElevationDiff = alternateLongestPath.highestElevation - alternateLongestPath.lowestElevation;
+
+						if(newElevationDiff > currentElevationDiff) {
+							pathValue[alternateLongestPath.stops] = alternateLongestPath;
+						}
+					}
+				}
+			}
+
+			var getLongestPath = function() {
+				if(pathValue.length) {
+					return pathValue[Math.max.apply(null, pathIndex)];
 				} else {
-					var currentPath = pathValue[alternateLongestPath.stops];
-					var currentElevationDiff = currentPath.highestElevation - currentPath.lowestElevation;
-					var newElevationDiff = alternateLongestPath.highestElevation - alternateLongestPath.lowestElevation;
+					return false
+				}
+			}
+
+			// Get longest stops from the 4 paths
+			registerAlternatePath(currentLandscape.left);
+			registerAlternatePath(currentLandscape.right);
+			registerAlternatePath(currentLandscape.top);
+			registerAlternatePath(currentLandscape.bottom);
+			var longestPath = getLongestPath();
+
+			// if on the lowest point of slope
+			if(longestPath === false) {
+				return {
+					path: [currentLandscape],
+					stops: 1,
+					lowestElevation: currentLandscape.elevation,
+					highestElevation: currentLandscape.elevation
+				}
+			} else {
+				longestPath.path = [currentLandscape].concat(longestPath.path);
+				longestPath.stops = longestPath.stops + 1;
+				longestPath.highestElevation = currentLandscape.elevation;
+				return longestPath;
+			}
+
+		} else {
+			return currentLandscape.longestStops;
+		}
+
+	} else {
+		var longestPath;
+
+		for (var i = 1; i <= self.mapWidth; i++) {
+			for (var j = 1; j <= self.mapHeight; j++) {
+				var newLongestPath = self.getLongestPath(self.getLandscape(i, j));
+				if(longestPath === undefined) {
+					longestPath = newLongestPath;
+				} else {
+					var currentElevationDiff = longestPath.highestElevation - longestPath.lowestElevation;
+					var newElevationDiff = newLongestPath.highestElevation - newLongestPath.lowestElevation;
 
 					if(newElevationDiff > currentElevationDiff) {
-						pathValue[alternateLongestPath.stops] = alternateLongestPath;
+						longestPath = newLongestPath;
 					}
 				}
 			}
 		}
 
-		var getLongestPath = function() {
-			if(pathValue.length) {
-				return pathValue[Math.max.apply(null, pathIndex)];
-			} else {
-				return false
-			}
-		}
+		return longestPath;
 
-		// Get longest stops from the 4 paths
-		registerAlternatePath(currentLandscape.left);
-		registerAlternatePath(currentLandscape.right);
-		registerAlternatePath(currentLandscape.top);
-		registerAlternatePath(currentLandscape.bottom);
-		var longestPath = getLongestPath();
-
-		// if on the lowest point of slope
-		if(longestPath === false) {
-			return {
-				path: [currentLandscape],
-				stops: 1,
-				lowestElevation: currentLandscape.elevation,
-				highestElevation: currentLandscape.elevation
-			}
-		} else {
-			longestPath.path = [currentLandscape].concat(longestPath.path);
-			longestPath.stops = longestPath.stops + 1;
-			longestPath.highestElevation = currentLandscape.elevation;
-			return longestPath;
-		}
-
-	} else {
-		return currentLandscape.longestStops;
 	}
+
+
 };
+
+
 
 if(module) {
 	module.exports = Skimap;

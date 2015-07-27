@@ -76,12 +76,34 @@ describe('Unit Test', function() {
 				var skimap = new Skimap({
 					filePath: __dirname + '/files/test.txt'
 				});
-				var longestStops = skimap.getLongestPath(skimap.getLandscape(3, 2));
-				longestStops.stops.should.equal(5);
-				longestStops.path.forEach(function(item, index) {
-					console.log(item.elevation);
-				});
+				var longestStops = skimap.getLongestPath(skimap.getLandscape(2, 2));
+				longestStops.stops.should.equal(4);
 			});
+			it('Should return the global longest path if no landscape specified', function() {
+				var skimap = new Skimap({
+					filePath: __dirname + '/files/test.txt'
+				});
+				var longestStops = skimap.getLongestPath();
+				longestStops.stops.should.equal(5);
+			});
+
+		});
+
+	});
+
+});
+
+describe('RedMart', function() {
+
+	describe('Test', function() {
+
+		it('Should return correct result', function() {
+			var skimap = new Skimap({
+				filePath: __dirname + '/files/map.txt'
+			});
+			var longestStops = skimap.getLongestPath();
+			console.log('' + longestStops.path.length + (longestStops.highestElevation - longestStops.lowestElevation) + '@redmart.com');
+			longestStops.stops.should.not.be.equal(0);
 
 		});
 
