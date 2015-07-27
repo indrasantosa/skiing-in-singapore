@@ -97,6 +97,17 @@ describe('Unit Test', function() {
 				longestStops.stops.should.equal(6);
 			});
 
+			it('Should should get the correct longest path', function() {
+				var skimap = new Skimap({
+					filePath: __dirname + '/files/test3.txt'
+				});
+				longestStops = skimap.getLongestPath();
+				longestStops.path.forEach(function(item, index) {
+					console.log(item.posX, item.posY, item.elevation);
+				});
+				longestStops.lowestElevation.should.equal(1);
+			});
+
 		});
 
 	});
@@ -113,6 +124,9 @@ describe('RedMart', function() {
 			});
 			var longestStops = skimap.getLongestPath();
 			console.log('' + longestStops.path.length + (longestStops.highestElevation - longestStops.lowestElevation) + '@redmart.com');
+			longestStops.path.forEach(function(item, index) {
+				console.log(item.posX, item.posY, item.elevation);
+			});
 			longestStops.stops.should.not.be.equal(0);
 
 		});
