@@ -86,6 +86,16 @@ describe('Unit Test', function() {
 				var longestStops = skimap.getLongestPath();
 				longestStops.stops.should.equal(5);
 			});
+			it('Should prioritize length over slope differences', function() {
+				var skimap = new Skimap({
+					filePath: __dirname + '/files/test2.txt'
+				});
+				longestStops = skimap.getLongestPath();
+				longestStops.path.forEach(function(item, index) {
+					console.log(item.posX, item.posY, item.elevation);
+				});
+				longestStops.stops.should.equal(6);
+			});
 
 		});
 

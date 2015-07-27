@@ -172,6 +172,7 @@ Skimap.prototype.getLongestPath = function (currentLandscape) {
 
 		for (var i = 1; i <= self.mapWidth; i++) {
 			for (var j = 1; j <= self.mapHeight; j++) {
+
 				var newLongestPath = self.getLongestPath(self.getLandscape(i, j));
 				if(longestPath === undefined) {
 					longestPath = newLongestPath;
@@ -179,10 +180,14 @@ Skimap.prototype.getLongestPath = function (currentLandscape) {
 					var currentElevationDiff = longestPath.highestElevation - longestPath.lowestElevation;
 					var newElevationDiff = newLongestPath.highestElevation - newLongestPath.lowestElevation;
 
-					if(newElevationDiff > currentElevationDiff) {
+					if(newLongestPath.path.length > longestPath.path.length) {
+						longestPath = newLongestPath;
+					} else if(newLongestPath.path.length == longestPath.path.length && newElevationDiff === currentElevationDiff) {
 						longestPath = newLongestPath;
 					}
+
 				}
+
 			}
 		}
 
