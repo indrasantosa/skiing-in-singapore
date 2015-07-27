@@ -70,6 +70,21 @@ describe('Unit Test', function() {
 
 		});
 
+		describe('.getLongestPath', function() {
+
+			it('Should get the longest path correctly', function() {
+				var skimap = new Skimap({
+					filePath: __dirname + '/files/test.txt'
+				});
+				var longestStops = skimap.getLongestPath(skimap.getLandscape(3, 2));
+				longestStops.stops.should.equal(5);
+				longestStops.path.forEach(function(item, index) {
+					console.log(item.elevation);
+				});
+			});
+
+		});
+
 	});
 
 });

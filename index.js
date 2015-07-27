@@ -40,7 +40,7 @@ Skimap.prototype.traceMap = function (filePath) {
 		mapWidth = parseInt(headerArray[0]);
 		mapHeight = parseInt(headerArray[1]);
 	}
-	var extractRow = function(rowString) {
+	var extractRow = function(rowString, row) {
 		var itemArray = rowString.trim().split(' ');
 
 		// Iterate through array to push landscape data to array
@@ -48,6 +48,8 @@ Skimap.prototype.traceMap = function (filePath) {
 			var content = parseInt(itemArray[i]);
 			if(!isNaN(content)) {
 				var newItem = {
+					posX: i+1,
+					posY: row,
 					elevation: content
 				};
 				mapArray.push(newItem);
@@ -57,7 +59,7 @@ Skimap.prototype.traceMap = function (filePath) {
 
 	extractHeader(mapInfoArray[0]);
 	for (var i = 1; i < mapInfoArray.length; i++) {
-		extractRow(mapInfoArray[i]);
+		extractRow(mapInfoArray[i], i);
 	}
 
 	var wireupLandscape = function() {
@@ -88,6 +90,78 @@ Skimap.prototype.traceMap = function (filePath) {
 
 Skimap.prototype.getLandscape = function (pointX, pointY) {
 	return this.map[((pointY-1)*this.mapWidth) + (pointX-1)] || undefined;
+};
+
+Skimap.prototype.getLongestPath = function (currentLandscape) {
+	var self = this;
+
+	if(currentLandscape.longestStops === undefined) {
+
+		/**
+		 * path model should be
+		 * {
+		 * 		path: [Array of landscapes],
+		 * 		stops: how many steps,
+		 *   	lowestElevation: lowest point of slope
+		 *   	hightestElevation: hightest point of slope
+		 * }
+		 */
+
+		var pathIndex = [];
+		var pathValue = [];
+
+		var registerAlternatePath = function(alternateLandscape) {
+			if(alternateLandscape && alternateLandscape.elevation < currentLandscape.elevation) {
+				var alternateLongestPath = self.getLongestPath(alternateLandscape);
+
+				if(pathValue[alternateLongestPath.stops] === undefined) {
+					pathValue[alternateLongestPath.stops] = alternateLongestPath;
+					pathIndex.push(alternateLongestPath.stops);
+				} else {
+					var currentPath = pathValue[alternateLongestPath.stops];
+					var currentElevationDiff = currentPath.highestElevation - currentPath.lowestElevation;
+					var newElevationDiff = alternateLongestPath.highestElevation - alternateLongestPath.lowestElevation;
+
+					if(newElevationDiff > currentElevationDiff) {
+						pathValue[alternateLongestPath.stops] = alternateLongestPath;
+					}
+				}
+			}
+		}
+
+		var getLongestPath = function() {
+			if(pathValue.length) {
+				return pathValue[Math.max.apply(null, pathIndex)];
+			} else {
+				return false
+			}
+		}
+
+		// Get longest stops from the 4 paths
+		registerAlternatePath(currentLandscape.left);
+		registerAlternatePath(currentLandscape.right);
+		registerAlternatePath(currentLandscape.top);
+		registerAlternatePath(currentLandscape.bottom);
+		var longestPath = getLongestPath();
+
+		// if on the lowest point of slope
+		if(longestPath === false) {
+			return {
+				path: [currentLandscape],
+				stops: 1,
+				lowestElevation: currentLandscape.elevation,
+				highestElevation: currentLandscape.elevation
+			}
+		} else {
+			longestPath.path = [currentLandscape].concat(longestPath.path);
+			longestPath.stops = longestPath.stops + 1;
+			longestPath.highestElevation = currentLandscape.elevation;
+			return longestPath;
+		}
+
+	} else {
+		return currentLandscape.longestStops;
+	}
 };
 
 if(module) {
